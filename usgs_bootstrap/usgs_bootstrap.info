@@ -1,0 +1,86 @@
+name = USGS: Bootstrap Theme
+description = A Bootstrap Sub-theme designed for USGS WRET project.
+core = 7.x
+base theme = bootstrap
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;; Regions
+;;;;;;;;;;;;;;;;;;;;;
+
+regions[navigation]     = 'Navigation'
+regions[header]         = 'Top Bar'
+regions[breadcrumb]     = 'Breadcrumb'
+regions[help]           = 'Help'
+regions[search]         = 'Search'
+regions[social]         = 'Social'
+regions[content]        = 'Content'
+regions[sidebar_first]  = 'Primary'
+regions[sidebar_second] = 'Secondary'
+regions[footer]         = 'Footer'
+regions[page_top]       = 'Page top'
+regions[page_bottom]    = 'Page bottom'
+regions[search]         = 'Search'
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;; Stylesheets
+;;;;;;;;;;;;;;;;;;;;;
+
+stylesheets[all][] = css/style.css
+stylesheets[all][] = css/5-col-grid.css
+stylesheets[all][] = fonts/font-awesome-4.2.0/css/font-awesome.min.css
+
+
+; For information on choosing the desired method, please read the Drupal
+; Bootstrap sub-theme "how-to" documentation:
+; https://drupal.org/node/1978010
+
+; ;----------------------------------
+; ; METHOD 1: Bootstrap Source Files
+; ;----------------------------------
+; 
+; ;;;;;;;;;;;;;;;;;;;;;
+; ;; Scripts
+; ;;;;;;;;;;;;;;;;;;;;;
+
+ scripts[] = 'bootstrap/js/affix.js'
+ scripts[] = 'bootstrap/js/alert.js'
+ scripts[] = 'bootstrap/js/button.js'
+ scripts[] = 'bootstrap/js/carousel.js'
+ scripts[] = 'bootstrap/js/collapse.js'
+ scripts[] = 'bootstrap/js/dropdown.js'
+ scripts[] = 'bootstrap/js/modal.js'
+ scripts[] = 'bootstrap/js/tooltip.js'
+ scripts[] = 'bootstrap/js/popover.js'
+ scripts[] = 'bootstrap/js/scrollspy.js'
+ scripts[] = 'bootstrap/js/tab.js'
+ scripts[] = 'bootstrap/js/transition.js'
+ scripts[] = 'js/script.js'
+
+ ; Disable BootstrapCDN if using Bootstrap source files in your sub-theme.
+ settings[bootstrap_cdn] = ''
+
+
+; ;-------------------------
+; ; METHOD 2: Bootstrap CDN
+; ;-------------------------
+;
+; Method 2 uses BootstrapCDN, the only thing you might need to provide here
+; is overrides to Bootstrap theme settings. Copy them here from the base theme
+; to override.
+
+
+; ;-------------------------
+; ; DEFAULT THEME SETTINGS
+; ;-------------------------
+;
+settings[toggle_logo] = 1
+settings[toggle_name] = 0
+settings[toggle_slogan] = 0
+settings[toggle_node_user_picture] = 1
+settings[toggle_comment_user_picture] = 1
+settings[toggle_comment_user_verification] = 1
+settings[toggle_favicon] = 1
+settings[toggle_main_menu] = 1
+settings[toggle_secondary_menu] = 0

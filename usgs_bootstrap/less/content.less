@@ -1,0 +1,378 @@
+h1.page-header {
+    border: none;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    padding: 0px;
+}
+
+#bread-share {
+    position:relative;
+    .breadcrumb {
+        float:left;
+
+    }
+    .social-share {
+        color: #666;
+        margin-top:-14px;
+        position:absolute;
+        right:7%;
+        width:40px;
+        z-index:1000;
+        display:none;
+        h6 {
+            margin-top:0;
+        } 
+        .h6 {
+            margin-top:0;
+        }         
+        .fa-caret-up {
+            color:#fff; 
+            position:relative;
+            top:0;
+            left:42%;
+        }
+        .share-text {
+            display:none;
+        }
+        ul {
+            list-style:none; 
+            background:white;
+            padding: 0 10px 0px;
+            border:1px solid #ccc;
+            border-top:none;  
+            margin-top:-10px;
+            li {
+                float:none;
+                margin-left: 0px; 
+            } 
+        }
+
+        a {
+            color:#666;
+            width: 20px;
+            height: 20px;
+
+            .fa-twitter-square:hover     {color:#55ACEE;}
+            .fa-facebook-square:hover    {color:#3c5a99;}
+            .fa-linkedin-square:hover    {color:#0077B5;}
+            .fa-google-plus-square:hover {color:#dd4b39;}
+            .fa-github:hover             {color:#666666;}            
+            .fa-fa-flickr:hover          {color:#fe0086;}
+            .fa-youtube-play:hover       {color:#a71416;}
+            .fa-fa-instagram:hover       {color:#666666;}
+        }
+        &.collapsed { 
+            //  display:none;
+        }
+        @media @normal {
+            display:inline-block;
+            float: right;
+            height:40px;
+            padding:0;
+            margin:0;
+            width:auto;
+
+            .share-text {
+                display:inline-block;
+                margin-top:7px;
+                vertical-align:top;
+            }         
+            ul {
+                border:none;
+                display:inline-block;
+                float:right;
+                list-style:none;
+                margin:0;
+                padding:0;
+                li {
+                    float:left;
+                    margin-left:5px; 
+                } 
+            }
+        }
+        @media @wide {
+            display:inline-block;
+            float: right;
+            height:40px;
+            padding:0;
+            margin:0;
+            width:auto;
+            .share-text {
+                display:inline-block;
+                margin-top:7px;
+                vertical-align:top;
+            }         
+            ul {
+                border:none;
+                display:inline-block;
+                float:right;
+                list-style:none;
+                margin:0;
+                padding:0;
+                li {
+                    float:left;
+                    margin-left:5px; 
+                } 
+            }
+        }
+    }
+
+}
+.front .jumbotron.container {
+    @media @tablet {
+        max-width:   100%;
+        width:  100%;
+    }
+    @media @normal {
+        max-width:   100%;
+        width:  100%;
+    }
+    @media @wide {
+        max-width:   100%;
+        width:  100%;
+    }
+}
+
+// carousel
+.carousel {
+    .btn {border-radius: 0;}
+    .btn-slide {
+        color: #fff;
+        background-color:transparent;
+        border-color: #fff;
+        :hover,
+            :focus,
+            :active,
+            .active  {
+            color: #fff;
+            background-color:transparent;
+            border-color: #fff;
+        }
+        .badge {
+            color: #ffffff;
+            background-color: transparent;
+        }
+    }
+    .carousel-caption{right:20%;left:20%;padding-bottom:110px;}
+    .carousel-inner .item {
+        background: #000;
+        img {
+            opacity:0.5;
+        }
+    }
+}
+
+.open .dropdown-toggle.btn-slide {
+    color: #fff;
+    background-color:transparent;
+    border-color: #fff;
+}
+
+// section tabs
+Styling for tabs in views 
+.nav-tabs.nav-justified {
+
+    li.usgs-section-tab > a,
+    li.usgs-section-tab > a {
+
+        border-radius: 0px;
+        padding: 5px 0px;
+        font-size: 12px;
+    }
+    @media (max-width: 767px ) {
+        .nav-tabs.nav-justified li.usgs-section-tab > a, li.usgs-section-tab > a {
+            border-radius: 0px;
+            padding: 15px 0px;
+            background-color: #eee;
+            color: black;
+            margin-bottom: 1px;
+        } 
+    }
+}
+//side nav
+#side-navigation .active {
+    background-color: #71a100;
+    color: #fff;
+    -moz-border-radius: 1px;
+    -webkit-border-radius: 1px;
+    -khtml-border-radius: 1px;
+    border-radius: 1px;
+}
+#side-navigation>ul>li>a  {
+    font-family: 'TeXGyreHeroscnregular';
+    text-transform: uppercase;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    color:#000;
+}
+
+#side-navigation ul ul li .active {
+    color: #000;
+    background:none;
+}
+#side-navigation ul ul {
+  background-color: #f4f4f4;
+  padding-left: 15px;
+  padding-right: 15px;
+ }
+
+#side-navigation ul ul li h5 {
+  margin-bottom: 20px;
+
+  a {
+    color: #1D5AAB;
+  }
+}
+
+.nav-pills > li > a {
+  border-radius: 0px;
+}
+
+.side_nav_nested {
+    background-color: #fafafa;
+}
+
+h2.nav-title {
+    margin-top: 0px;
+    padding-top: 0px;
+}
+
+.view h4 {
+    margin-bottom: 0px;
+}
+
+h4 a {
+    color: #1D5AAB;
+}
+
+.intro-paragraph {
+    border-bottom: 1px solid #dddddd;
+    margin-bottom: 15px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    margin-bottom: 15px;
+}
+
+.intro-paragraph-overview {
+    border-bottom: 1px solid #dddddd;
+    margin-bottom: 15px;
+    padding-top: 15px;
+    padding-bottom: 30px;
+    margin-bottom: 15px;
+}
+
+// Section Tab Views
+.views-row {
+    margin-top: 50px;
+    margin-bottom: 50px;
+}
+
+.view-section-tab-views .row,
+.view-overview .row {
+    margin-bottom: 15px;
+}
+
+.view-section-tab-views h4,
+.view-overview h4{
+    padding-top: 0px;
+    margin-top: 0px;
+}
+.nav-pills .nav-tabs li.usgs-section-tab > a, li.usgs-section-tab > a {
+  height: 44px;
+  padding: 10px;
+}
+
+// Add some new stuff to nav-tabs
+.nav-tabs {
+    border-bottom: 1px solid @nav-tabs-border-color;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    > li {
+        float: left;
+        // Make the list-items overlay the bottom border
+        margin-bottom: -1px;
+
+        // Remove the margins and paddings
+        h6 {
+            margin-bottom: 1px;
+            line-height: @line-height-base;
+        }
+
+        // Actual tabs (as links)
+        h6 > a {
+            padding: 10px 10px 0px 10px;
+            line-height: @line-height-base;
+            border: 1px solid transparent;
+            border-radius: 0 0 0 0;
+            &:hover {
+                border-color: @nav-tabs-link-hover-border-color @nav-tabs-link-hover-border-color @nav-tabs-border-color;
+            }
+        }
+
+        // Active state, and its :hover to override normal :hover
+        &.active > h6 > a {
+            &,
+            &:hover,
+            &:focus {
+                color: @nav-tabs-active-link-hover-color;
+                background-color: @nav-tabs-active-link-hover-bg;
+                border: 1px solid @nav-tabs-active-link-hover-border-color;
+                border-bottom-color: transparent;
+                cursor: default;
+            }
+        }
+    }
+    // pulling this in mainly for less shorthand
+    &.nav-justified {
+        .nav-justified();
+        .nav-tabs-justified();
+    }
+}
+// End adding nav-tabs stuff
+
+
+.nav-tabs.nav-justified li.usgs-section-tab > a,
+li.usgs-section-tab > a {
+  border-radius: 0px;
+  padding: 5px 0px;
+  font-size: 12px;
+}
+
+@media (max-width: 767px ) {
+
+  .nav-tabs.nav-justified li.usgs-section-tab > a, li.usgs-section-tab > a {
+    border-radius: 0px;
+    padding: 15px 0px;
+    background-color: #eee;
+    color: black;
+    margin-bottom: 1px;
+  }
+  .view-section-tab-views h4,
+  .view-overview h4{
+    padding-top: 0px;
+    margin-top: 15px;
+  }
+
+}
+
+@media (max-width: 992px ) {
+  .nav-tabs.nav-justified li.usgs-section-tab > a, li.usgs-section-tab > a {
+    border-radius: 0px;
+    padding: 15px 0px;
+    background-color: #eee;
+    color: #1D5AAB;
+    margin-bottom: 1px;
+  }
+
+}
+
+.usgs-bootstrap-carousel {
+    margin-bottom: 30px;
+}
+
+.btn-success {
+  color: #FFF;
+  background-color: #71A100;
+  border-color: #FFF;
+  border-radius: 0px;
+}
