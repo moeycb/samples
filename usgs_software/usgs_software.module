@@ -1,0 +1,29 @@
+<?php
+/**
+ *  So this module is pretty empty right now, but over time code that that adds
+ *  Software specific features will be provided here.
+ */
+
+/**
+ *
+ * Implement hook_ctools_plugin_directory().
+ *
+ * @param $module
+ * @param $plugin
+ * @return string
+ */
+function usgs_software_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && $plugin == 'content_types') {
+    return "plugins/" . $plugin;
+  }
+}
+
+/**
+ * Implementation of hook_preprocess().
+ */
+function usgs_software_preprocess_usgs_layout_1(&$vars) {
+  module_load_include('inc', 'usgs_software', 'plugins/content_types/usgs_plugin_software_tab');
+
+  $view = usgs_software_tab_render(NULL, NULL, NULL, NULL);
+  $vars['software'] = $view->content;
+}

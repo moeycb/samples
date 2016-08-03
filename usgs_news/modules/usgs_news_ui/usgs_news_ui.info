@@ -1,0 +1,10 @@
+name = USGS News Administration UI
+description = Provides a UI for administering News content
+core = 7.x
+package = USGS
+
+dependencies[] = usgs_news
+dependencies[] = usgs_partners
+
+files[] = views/usgs_news_ui_handler_filter_by_year.inc
+files[] = views/usgs_news_ui_handler_filter_by_state.inc

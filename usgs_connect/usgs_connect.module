@@ -1,0 +1,440 @@
+<?php
+
+/**
+ * @file
+ * usgs_plugin_global.features.inc
+ */
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ * @param type $module
+ * @param type $plugin
+ * @return type
+ */
+function usgs_connect_ctools_plugin_directory($module, $plugin) {
+    if ($module == 'ctools' && !empty($plugin)) {
+        return "plugins/$plugin";
+    }
+}
+
+/**
+ * Implement hook_ctools_plugin_api().
+ */
+function usgs_connect_ctools_plugin_api($module, $api) {
+    if ($module == 'panels_mini' && $api == 'panels_default') {
+        return array('version' => 1);
+    }
+    if ($module == 'page_manager' && $api == 'pages_default') {
+        return array('version' => 1);
+    }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function usgs_connect_theme($existing, $type, $theme, $path) {
+    $folder = drupal_get_path('module', 'usgs_connect') . '/theme';
+    return array(
+        'usgs_connect_social_media' => array(
+            'variables' => array('media' => null),
+            'file' => 'usgs_connect.theme.inc',
+            'path' => $folder,
+        ),
+    );
+}
+
+/**
+ * Implements ajax  Add modals? later
+ */
+function usgs_connect_ajax($ajax = false, $action = false) {
+    if (!$ajax || !$action) {
+        //    drupal_not_found();
+    }
+
+    $numargs = func_num_args();
+    $args = func_get_args();
+
+    $commands = array();
+
+    switch ($action) {
+        case 'toggle-view-mode':
+            $vars['view_mode'] = (!empty($args[2])) ? $args[2] : 'view-less';
+            $view = (!empty($args[3])) ? $args[3] : false;
+            $vars['toplevel_alias'] = (!empty($args[4])) ? $args[4] : false;
+
+            $vars['group_category'] = (!empty($args[5])) ? $args[5] : false;
+            $vars['group_tags'] = (!empty($args[6])) ? $args[6] : false;
+            $vars['nid'] = (!empty($args[7])) ? $args[7] : false;
+            $vars['menu_item'] = menu_get_item();
+
+
+            $theme_function = "usgs_{$view}";
+            $data = theme($theme_function, $vars);
+            $commands[] = ajax_command_replace('#global-' . $view . '-replace', $data);
+            break;
+        case 'filter-topic' :
+            $view_name = isset($args[2]) ? $args[2] : false;
+            $display_name = isset($args[3]) ? $args[3] : false;
+            $group_category = 'FAQ Category';
+            $group_tag = 'FAQ Tags';
+            $data = views_embed_view($view_name, $display_name, $nid, $topic, $category, $term);
+
+            if ($view_name) {
+                $commands[] = ajax_command_replace('#ajax-replace', $data);
+            }
+            break;
+
+        default:
+        # drupal_not_found();
+    }
+
+    if ($commands) {
+        print ajax_render($commands);
+        exit;
+    }
+}
+
+/**
+ * get the location vocabulary terms
+ * @param type $vids
+ * @return type
+ */
+function usgs_connect_list_location_terms($vids) {
+    $terms = array();
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'taxonomy_term')
+            ->propertyCondition('vid', $vids, 'in');
+
+    $result = $query->execute();
+    if (!empty($result['taxonomy_term'])) {
+        $taxonomy = taxonomy_term_load_multiple(array_keys($result['taxonomy_term']));
+        foreach ($taxonomy AS $term) {
+            $vocab = ucfirst($term->vocabulary_machine_name);
+            $terms[$vocab][$term->tid] = $term->name;
+        }
+    }
+    asort($terms);
+    return $terms;
+}
+
+/**
+ * get vids for location
+ * @return type
+ */
+function usgs_connect_get_location_vids() {
+    $vocabularies = array();
+    $regions = array('Alaska', 'Midwest', 'Northeast', 'Northwest', 'Pacific', 'Southeast', 'Southwest');
+
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'taxonomy_vocabulary')
+            ->propertyCondition('machine_name', $regions, 'in');
+
+    $result = $query->execute();
+    return !empty($result['taxonomy_vocabulary']) ? array_keys($result['taxonomy_vocabulary']) : array();
+}
+
+function usgs_connect_list_topics() {
+    $topics = array();
+    if ($vocabulary = taxonomy_vocabulary_machine_name_load('topic')) {
+        if ($terms = taxonomy_get_tree($vocabulary->vid)) {
+            foreach ($terms as $term) {
+                $topics[$term->tid] = str_repeat('-', $term->depth) . $term->name;
+            }
+        }
+    }
+    //  asort($topics);
+    return $topics;
+}
+
+function usgs_connect_list_networks() {
+    return array(
+        'Facebook' => 'Facebook',
+        'Flicker' => 'Flicker',
+        'GitHub' => 'GitHub',
+        'Google+' => 'Google+',
+        'Instagram' => 'Instagram',
+        'Podcasts' => 'Podcasts',
+        'Twitter' => 'Twitter',
+        'YouTube' => 'YouTube',
+    );
+}
+
+/*
+ * Add random to queries
+ */
+
+function usgs_connect_query_random_alter($query) {
+    $query->orderRandom();
+}
+
+/**
+ * 
+ * @param type $form
+ * @param type $form_state
+ * @return string
+ */
+function usgs_connect_social_media_form($form, $form_state) {
+    $variables['media'] = array();
+    $topic = !empty($form_state['values']['filter_topic']) ? $form_state['values']['filter_topic'] : false;
+    $location = !empty($form_state['values']['filter_location']) ? $form_state['values']['filter_location'] : false;
+    $network = !empty($form_state['values']['filter_network']) ? $form_state['values']['filter_network'] : false;
+
+    $location_vids = usgs_connect_get_location_vids();
+    $location_terms = usgs_connect_list_location_terms($location_vids);
+    $topics = usgs_connect_list_topics();
+    $networks = usgs_connect_list_networks();
+
+    // is this an ajax callback
+    $trigger = !empty($form_state['triggering_element']['#id']) ? $form_state['triggering_element']['#id'] : false;
+
+    // build query
+    $query = db_select('node', 'n')
+            ->condition('n.type', 'social_media', '=')
+            ->condition('n.status', 1, '=');
+    $query->join('field_data_field_social_media_icon', 'i', 'n.nid = i.entity_id  AND n.vid = i.revision_id');
+    $query->join('field_data_field_links_to', 'l', 'n.nid = l.entity_id  AND n.vid = l.revision_id');
+    $query->leftJoin('field_data_body', 'b', 'n.nid = b.entity_id  AND n.vid = b.revision_id');
+
+    if (!empty($topic)) {
+        $query->condition('t.field_topic_tid', $topic, '=');
+        $query->join('field_data_field_topic', 't', 'n.nid = t.entity_id  AND n.vid = t.revision_id');
+    }
+
+    if (!empty($location)) {
+        $query->leftJoin('field_data_field_alaska', 'ak', 'n.nid = ak.entity_id AND n.vid = ak.revision_id');
+        $query->leftJoin('field_data_field_midwest', 'mw', 'n.nid = mw.entity_id AND n.vid = mw.revision_id');
+        $query->leftJoin('field_data_field_northeast', 'ne', 'n.nid = ne.entity_id AND n.vid = ne.revision_id');
+        $query->leftJoin('field_data_field_northwest', 'nw', 'n.nid = ne.entity_id AND n.vid = nw.revision_id');
+        $query->leftJoin('field_data_field_pacific', 'pa', 'n.nid = pa.entity_id AND n.vid = pa.revision_id');
+        $query->leftJoin('field_data_field_southeast', 'se', 'n.nid = se.entity_id AND n.vid = se.revision_id');
+        $query->leftJoin('field_data_field_southwest', 'sw', 'n.nid = sw.entity_id AND n.vid = sw.revision_id');
+        $query->condition(db_or()
+                        ->condition('ak.field_alaska_tid', $location)
+                        ->condition('mw.field_midwest_tid', $location)
+                        ->condition('ne.field_northeast_tid', $location)
+                        ->condition('nw.field_northwest_tid', $location)
+                        ->condition('pa.field_pacific_tid', $location)
+                        ->condition('se.field_southeast_tid', $location)
+                        ->condition('sw.field_southwest_tid', $location)
+        );
+    }
+
+    if (!empty($network)) {
+        $query->condition('i.field_social_media_icon_value', $network, '=');
+    }
+
+    $query->fields('n', array('nid', 'title'))
+            ->fields('i', array('field_social_media_icon_value'))
+            ->fields('l', array('field_links_to_url', 'field_links_to_title'))
+            ->fields('b', array('body_value'));
+    $query->orderBy('n.title', 'asc');
+
+    $results = $query->execute()->fetchAll();
+
+    // process results
+    foreach ($results AS $result) {
+        if (empty($variables['media'][$result->title]['body'])) {
+            $variables['media'][$result->title]['body'] = $result->body_value;
+        }
+        $variables['media'][$result->title]['values'][] = $result;
+    }
+
+    $form['#attached']['js'] = array(
+        drupal_get_path('module', 'usgs_connect') . '/js/script.js',
+    );
+    $form['#attached']['css'] = array(
+        drupal_get_path('module', 'usgs_connect') . '/css/style.css', 'file'
+    );
+    $form['filter_markup'] = array(
+        '#type' => 'item',
+        '#markup' => 'Filter Total Items: ' . sizeof($variables['media']),
+    );
+
+
+
+    // has location ever changed
+    $location_changed = (strpos($trigger, 'edit-filter-location') !== false) ||
+            !empty($form_state['values']['location_changed']) ? true : false;
+    $form['location_changed'] = array(
+        '#type' => 'value',
+        '#value' => $location_changed ? true : false,
+    );
+
+    $form['filter_location'] = array(
+        '#type' => 'select',
+        '#title' => t('Location'),
+        '#title_display' => 'invisible',
+        '#description' => t('Select here to refine search.'),
+        '#options' => $location_terms,
+        '#default_value' => $location,
+        '#empty_option' => $location_changed ? 'View All Locations' : 'Select Location',
+        '#prefix' => '<div  id="global-filter-location" class="col-lg-3 col-md-3 col-xs-12 nopad-left">',
+        '#suffix' => '</div>',
+        '#ajax' => array(
+            'callback' => 'usgs_connect_social_media_filter_sort_callback',
+            'wrapper' => 'global-social-media-filter-replace',
+        ),
+    );
+
+    // has topic ever changed
+    $topic_changed = (strpos($trigger, 'edit-filter-topic') !== false) ||
+            !empty($form_state['values']['topic_changed']) ? true : false;
+    $form['topic_changed'] = array(
+        '#type' => 'value',
+        '#value' => $topic_changed ? true : false,
+    );
+
+    $form['filter_topic'] = array(
+        '#type' => 'select',
+        '#title' => t('Topic'),
+        '#title_display' => 'invisible',
+        '#description' => t('Select here to refine search.'),
+        '#options' => $topics,
+        '#default_value' => $topic,
+        '#empty_option' => $topic_changed ? 'View All Topics' : 'Select Topic',
+        '#prefix' => '<div  id="global-filter-topic" class="col-lg-3 col-md-3 col-xs-12">',
+        '#suffix' => '</div>',
+        '#ajax' => array(
+            'callback' => 'usgs_connect_social_media_filter_sort_callback',
+            'wrapper' => 'global-social-media-filter-replace',
+        ),
+    );
+
+    // has network ever changed
+    $network_changed = (strpos($trigger, 'edit-filter-network') !== false) ||
+            !empty($form_state['values']['network_changed']) ? true : false;
+    $form['network_changed'] = array(
+        '#type' => 'value',
+        '#value' => $network_changed ? true : false,
+    );
+
+    $form['filter_network'] = array(
+        '#type' => 'select',
+        '#title' => t('Network'),
+        '#title_display' => 'invisible',
+        '#description' => t('Select here to refine search.'),
+        '#options' => $networks,
+        '#default_value' => $network,
+        '#empty_option' => $network_changed ? 'View All Networks' : 'Select Network',
+        '#prefix' => '<div  id="global-filter-network" class="col-lg-3 col-md-3 col-xs-12">',
+        '#suffix' => '</div>',
+        '#ajax' => array(
+            'callback' => 'usgs_connect_social_media_filter_sort_callback',
+            'wrapper' => 'global-social-media-filter-replace',
+        ),
+    );
+
+
+
+    $form['embedded_view'] = array(
+        '#type' => 'item',
+        '#markup' => theme('usgs_connect_social_media', $variables),
+        '#prefix' => '<div id="global-social-media-filter-replace" class="col-lg-12 col-md-12 col-xs-12">',
+        '#suffix' => '</div>',
+    );
+
+    return $form;
+}
+
+function usgs_connect_social_media_filter_sort_callback($form, &$form_state) {
+    return array(
+        '#type' => 'ajax',
+        '#commands' => array(
+            ajax_command_replace("#global-filter-location", render($form['filter_location'])),
+            ajax_command_replace("#global-filter-topic", render($form['filter_topic'])),
+            ajax_command_replace("#global-filter-network", render($form['filter_network'])),
+            ajax_command_replace("#global-social-media-filter-replace", render($form['embedded_view']))
+        )
+    );
+}
+
+/**
+ * Returns active fields to hook_form_alter
+ *
+ * @return type
+ */
+function _usgs_connect_form_fields() {
+    $weight = 0;
+    return array(
+        'title' => array('#weight' => $weight++),
+        'field_body' => array('#weight' => $weight++,),
+        'field_images' => array('#weight' => $weight++,),
+        'field_link' => array('#weight' => $weight++),
+        'field_usgs_tags' => array(),
+        'field_usgs_free_tags' => array(),
+    );
+}
+
+/**
+ * 
+ * @return type
+ */
+function _usgs_connect_custom_fields() {
+    $weight = 0;
+    return array();
+}
+
+/**
+ * Implements hook_form_alter for connect content
+ */
+function usgs_connect_form_alter(&$form, &$form_state, $form_id) {
+
+    // get the connect
+    if ($form_id == 'usgs_node_node_form') {
+        $usgs_content_type = false;
+        $menu_item = menu_get_item();
+        $connect_tid = variable_get('usgs_product_connect', _usgs_connect_get_connect());
+        if ($menu_item['page_callback'] == 'node_add') {
+            $usgs_content_type = !empty($menu_item['page_arguments'][2]) ? $menu_item['page_arguments'][2] : false;
+        } else {
+            $tid = !empty($form['#node']->field_usgs_tags) ? $form['#node']->field_usgs_tags['und']['0']['tid'] : false;
+            $term = $tid ? taxonomy_term_load($tid) : false;
+            $usgs_content_type = $term ? strtolower($term->name) : false;
+        }
+
+        $connect_fields = _usgs_connect_form_fields();
+        $connect_custom_fields = _usgs_connect_custom_fields();
+
+        if ($usgs_content_type != '$connect') {
+            foreach ($connect_custom_fields AS $key) {
+                $form[$key]['#access'] = false;
+            }
+        } else {
+            foreach (array_keys($form) AS $key) {
+                if (in_array($key, array_keys($connect_fields))) {
+                    $form[$key] = array_replace_recursive($form[$key], $connect_fields[$key]);
+                } else if (strpos($key, 'field_') === 0) {
+                    $form[$key]['#access'] = false;
+                }
+            }
+        }
+    }
+}
+
+function _usgs_connect_get_connect() {
+    $connect = variable_get('usgs_product_connect');
+    if (!$connect) {
+        $vocabulary = taxonomy_vocabulary_machine_name_load('usgs_tags');
+        $vid = $vocabulary ? $vocabulary->vid : false;
+        $parent_array = taxonomy_get_term_by_name('Products', 'usgs_tags');
+        $parent_tid = key($parent_array);
+        $tree = taxonomy_get_tree($vid, $parent_tid, 1);
+        foreach ($tree AS $key => $term) {
+            if ($term->name = 'Connect') {
+                variable_set('usgs_product_connect', $key);
+                return $key;
+            }
+        }
+    }
+}
+
+/**
+ * Implementation of hook_preprocess().
+ */
+function usgs_connect_preprocess_usgs_layout_1(&$vars) {
+    module_load_include('inc', 'usgs_connect', 'plugins/content_types/usgs_connect_tab');
+
+    $connect = usgs_connect_tab_render(NULL, NULL, NULL, NULL);
+    $vars['connect'] = $connect->content;
+}
+

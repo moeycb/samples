@@ -1,0 +1,588 @@
+<?php
+/**
+ * The News Admin UI module provides content managers with simplified node
+ * edit forms when adding/editing News content types.
+ *
+ * In addition, it provides several pages that will serve as a dashboard for
+ * content managers to manage their content that they own.
+ *
+ * The module will define default views to begin with; however, we may need to
+ * hard code it similar to the way the node module does it for content.
+ */
+
+function usgs_news_ui_views_api(){
+    return array(
+        'api' => 3,
+        'path' => drupal_get_path('module', 'usgs_news_ui') . '/views',
+        'template path' => drupal_get_path('module', 'usgs_news_ui') . '/templates',
+    );
+}
+
+function usgs_news_ui_menu(){
+    $items['get-partner-data/%'] = array(
+        'page callback' => '_get_partner_data',
+        'page arguments'=>array(1),
+        'type' => MENU_CALLBACK,
+        'file' => 'usgs_news_ui.pages.inc',
+        'delivery callback' => 'ajax_deliver',
+        'access callback' => 'usgs_news_ui_access',
+    );
+
+    $items['get-contact-data/%'] = array(
+        'page callback' => '_get_contact_data',
+        'page arguments' => array(1),
+        'type' => MENU_CALLBACK,
+        'file' => 'usgs_news_ui.pages.inc',
+        'delivery callback' => 'ajax_deliver',
+        'access callback' => 'usgs_news_ui_access',
+    );
+
+   /* $items['admin/content/news-article'] = array(
+        'title' => 'News Articles',
+        'description' => 'Manage news content.',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('usgs_news_ui_admin_content'),
+        'access callback' => 'usgs_news_ui_access',
+        'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
+        'weight' => -10,
+        'file' => 'usgs_news_ui.admin.inc',
+    );
+*/
+
+    //user dashboard screen
+    $items['admin/news/dashboard']=array(
+        'title'=>'My Dashboard',
+        'page callback'=>'usgs_news_ui_dashboard',
+        'access callback' => 'user_access',
+        'access arguments' => array('update'),
+        'description' => 'Showing all users stories',
+        'file' => 'usgs_news_ui.admin.inc',
+        'type' => MENU_NORMAL_ITEM,
+
+    );
+    $items['admin/news/dashboard/all-news']=array(
+        'title'=>'News Dashboard',
+        'page callback'=>'usgs_news_ui_dashboard',
+        'page arguments'=>array('allNews'),
+        'access callback' => 'user_access',
+        'access arguments' => array('update'),
+        'description' => 'Showing all news stories',
+        'file' => 'usgs_news_ui.admin.inc',
+        'type' => MENU_NORMAL_ITEM,
+
+    );
+    $items['admin/news/dashboard/my-news']=array(
+        'title'=>'My News Products',
+        'page callback'=>'usgs_news_ui_dashboard',
+        'page arguments'=>array('myNews'),
+        'access callback' => 'user_access',
+        'access arguments' => array('update'),
+        'description' => 'Showing all of the current users stories',
+        'file' => 'usgs_news_ui.admin.inc',
+        'type' => MENU_LOCAL_TASK,
+
+    );
+    $items['admin/news/dashboard/all-news']=array(
+        'title'=>'All News Products',
+        'page callback'=>'usgs_news_ui_dashboard',
+        'page arguments'=>array('allNews'),
+        'access callback' => 'user_access',
+        'access arguments' => array('update'),
+        'description' => 'Showing all news stories',
+        'file' => 'usgs_news_ui.admin.inc',
+        'type' => MENU_LOCAL_TASK,
+
+    );
+
+
+
+
+    // Admin Settings.
+    $items['admin/config/content/usgs-ui'] = array(
+        'title' => 'USGS UI Settings',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('usgs_news_ui_admin_settings'),
+        'access callback' => 'user_access',
+        'access arguments' => array('administer site configuration'),
+        'description' => 'Global configuration of USGS News UI.',
+        'file' => 'usgs_news_ui.admin.inc',
+        'type' => MENU_NORMAL_ITEM,
+    );
+
+    // Node edit tabs
+    $tabs = array(
+        //'edit-title' => 'Title and Release Date',
+        //'edit-image' => 'Image',
+        //'edit-tags' => 'Tags',
+        'edit-contacts' => 'Contacts',
+        'edit-partners' => 'Partners',
+        'edit-notifications' => 'Notifications',
+    );
+
+    $weight = 20;
+    foreach ($tabs as $tab => $label) {
+        $items['node/%node/' . $tab] = array(
+            'title' => $label,
+            'page callback' => 'usgs_news_ui_page_edit',
+            'page arguments' => array(2, 1),
+            'access callback' => 'usgs_news_ui_edit_access',
+            'access arguments' => array('update', 1),
+            'weight' => $weight,
+            'file' => 'usgs_news_ui.pages.inc',
+            'type' => MENU_LOCAL_TASK,
+            'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+        );
+        $weight++;
+    }
+    /*$weight = 0;
+     foreach($tabs as $tab => $label) {
+         $items['add-content/news-article/' . $tab] = array(
+             'title' => $label,
+             'page callback' => 'usgs_news_ui_page_edit',
+             'page arguments' => array(2, 3),
+             'access callback' => 'usgs_news_ui_edit_access',
+             'access arguments' => array(1),
+             'weight' => $weight,
+             'type' => MENU_LOCAL_TASK,
+             'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+             'file' => 'usgs_news_ui.pages.inc',
+         );
+         $weight++;
+     } */
+
+    /*  $weight = 0;
+      foreach ($tabs as $tab => $label) {
+          $items['add-content/news-article/' . $tab . '/%node'] = array(
+              'title' => $label,
+              'page callback' => 'usgs_news_ui_page_edit',
+              'page arguments' => array(2, 3),
+              'access callback' => 'usgs_news_ui_edit_access',
+              'access arguments' => array(1),
+              'weight' => $weight,
+              'type' => MENU_LOCAL_TASK,
+              'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+              'file' => 'usgs_news_ui.pages.inc',
+          );
+          $weight++;
+      }
+  /*
+   *
+   * When they add a new News Article, create node, then redirect them to the editing pages. This way we don't have to have two sets of
+   * functions that mirror each other.
+   *
+   */
+    /* $items['add-content/news-article'] = array(
+         'page callback'=>'_create_news_node',
+         'type'=> MENU_LOCAL_TASK,
+         'file'=>'usgs_news_ui.pages.inc',
+         'access callback' => 'usgs_news_ui_edit_access',
+         'access arguments' => array(1),
+     );
+ */
+    return $items;
+}
+/*
+function usgs_news_ui_menu() {
+
+  $items['admin/content/news-article'] = array(
+    'title' => 'News Articles',
+    'description' => 'Manage news content.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('usgs_news_ui_admin_content'),
+    'access callback' => 'usgs_news_ui_access',
+    'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
+    'weight' => -10,
+    'file' => 'usgs_news_ui.admin.inc',
+  );
+
+    $items['admin/content/news-article/edit/%node'] = array(
+        'title' => 'Edit News Article',
+        'description' => 'Edit individual news stories',
+        'page callback' => 'node_page_edit',
+        'page arguments' => array(4),
+        'access callback' => 'usgs_news_ui_access',
+        'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
+        'weight' => -10,
+        'file' => 'node.pages.inc',
+        'file path'=>drupal_get_path('module', 'node'),
+
+    );
+  return $items;
+}
+*/
+/**
+ * Determines whether the current user may perform the operation on the node.
+ *
+ * @param $node
+ *   The node object on which the operation is to be performed, or node type
+ *   (e.g. 'forum') for "create" operation.
+ * @param $account
+ *   Optional, a user object representing the user for whom the operation is to
+ *   be performed. Determines access for a user other than the current user.
+ *
+ * @return boolean
+ *   TRUE if the operation may be performed, FALSE otherwise.
+ */
+
+function usgs_news_ui_edit_access($op, $node, $account = NULL) {
+    if(node_access($op, $node, $account)) {
+        // We want to only show the tabs on usgs_nodes that are of type 'news article'
+        // On first installing this module, we saved the tid in usgs_news_products_tid
+        $type_tid = variable_get('news_article_tid');
+        if(empty($type_tid)) {
+            $terms = taxonomy_get_term_by_name('News Article', 'usgs_tags');
+            $term = array_shift($terms);
+            $type_tid = $term->tid;
+        }
+        if(!empty($node->field_usgs_tags['und'])){
+            foreach($node->field_usgs_tags['und'] as $usgs_tag) {
+                if ($usgs_tag['tid'] == $type_tid) {
+                    return TRUE;
+                }
+            }
+        }
+        return FALSE;
+    }
+}
+
+function usgs_news_ui_theme($existing, $type, $theme, $path){
+  $themes = array(
+    // Admin settings config page
+    'usgs_news_ui_admin_settings' => array(
+      'render element' => 'form',
+      'file' => 'usgs_news_ui.admin.inc',
+    ),
+    // Provide a template for easy editing of form intro html
+    'usgs_news_ui_tags_form_intro' => array(
+      'variables' => array(),
+      'template' => 'usgs-news-ui-tags-form-intro',
+      'path' => drupal_get_path('module', 'usgs_news_ui') . '/templates/intros',
+    ),
+      'usgs_news_ui_image_form_intro' => array(
+          'variables' => array(),
+          'template' => 'usgs-news-ui-image-form-intro',
+          'path' => drupal_get_path('module', 'usgs_news_ui') . '/templates/intros',
+      ),
+      'usgs_news_ui_notifications_form_intro' => array(
+          'variables' => array(),
+          'template' => 'usgs-news-ui-notifications-form-intro',
+          'path' => drupal_get_path('module', 'usgs_news_ui') . '/templates/intros',
+      ),
+      'usgs_news_ui_partners_form_intro' => array(
+          'variables' => array(),
+          'template' => 'usgs-news-ui-partners-form-intro',
+          'path' => drupal_get_path('module', 'usgs_news_ui') . '/templates/intros',
+      ),
+
+      'usgs_news_ui_title_form_intro' => array(
+          'variables' => array(),
+          'template' => 'usgs-news-ui-title-form-intro',
+          'path' => drupal_get_path('module', 'usgs_news_ui') . '/templates/intros',
+      ),
+
+      'usgs_news_ui_contacts_form_intro'=>array(
+          'variables' => array(),
+          'template' => 'usgs-news-ui-contacts-form-intro',
+          'path' => drupal_get_path('module', 'usgs_news_ui') . '/templates/intros',
+      ),
+
+    'usgs_news_ui_tags_accordion' => array(
+      'render element' => 'form',
+        'variables' => array(),
+      'template' => 'usgs-news-ui-tags-accordion',
+      'path' => drupal_get_path('module', 'usgs_news_ui') . '/templates',
+    ),
+    'news_article_node_form'=>array(
+        'render element'=>'form',
+        'template'=>'news-article-form',
+        'variables' => array(),
+        'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+    ),
+
+      'usgs_news_ui_edit_tags_form'=>array(
+          'render element' =>'form',
+          'template'=>'usgs-news-ui-edit-tags-form',
+          'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+      ),
+      'usgs_news_ui_edit_image_form'=>array(
+          'render element' =>'form',
+          'template'=>'usgs-news-ui-edit-image-form',
+          'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+      ),
+      'usgs_news_ui_edit_notifications_form'=>array(
+          'render element' =>'form',
+          'template'=>'usgs-news-ui-edit-notifications-form',
+          'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+      ),
+      'usgs_news_ui_edit_contacts_form'=>array(
+          'render element' =>'form',
+          'template'=>'usgs-news-ui-edit-contacts-form',
+          'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+      ),
+      'usgs_news_ui_edit_partners_form'=>array(
+          'render element' =>'form',
+          'template'=>'usgs-news-ui-edit-partners-form',
+          'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+      ),
+      'usgs_news_ui_edit_title_form'=>array(
+          'render element' =>'form',
+          'template'=>'usgs-news-ui-edit-title-form',
+          'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+      ),
+      'views_view__my_news_products' => array(
+        'template'=>'views-view-fields--my-news-products',
+          'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+      ),
+      'views_view_unformatted__my_news_products' => array(
+          'template'=>'views-view-unformatted--my-news-products',
+          'path'=>drupal_get_path('module', 'usgs_news_ui') . '/templates',
+      ),
+
+  );
+  return $themes;
+}
+
+/*function template_preprocess_usgs_news_ui_edit_tags_form(&$variables, $d){
+    //just needed to define a preprocess to get the form to pass the variables in
+}
+*/
+/**
+ * Determine whether the user is able to access the USGS News Content Management
+ * forms.
+ *
+ * @todo We need to make this configurable based on what types will be included
+ * in the news ui.
+ *
+ */
+function usgs_news_ui_access() {
+  // @todo this is where we would add some code that will look at the configuration
+  // settings for this module
+  $types = array('news_article');
+
+  if(user_access("administer nodes")) {
+    return TRUE;
+  }
+
+  foreach($types as $type) {
+    if(user_access("create $type content")) {
+      return TRUE;
+    }
+    if(user_access("edit own $type content")) {
+      return TRUE;
+    }
+    if(user_access("delete own $type content")) {
+      return TRUE;
+    }
+    if(user_access("edit any $type content")) {
+      return TRUE;
+    }
+    if(user_access("delete any $type content")) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Returns a list of available news article type names. This is stored in the
+ * taxonomy vocabulary.
+ *
+ * @return
+ *   An array of news type names, keyed by the taxonomy term tid.
+ */
+
+function usgs_news_ui_news_get_types() {
+    $types = _get_news_article_types();
+  return $types;
+}
+
+function usgs_news_ui_get_year_range() {
+  foreach(range(1980,2015) as $year) {
+    $years[$year] = $year;
+  }
+  return $years;
+}
+
+function usgs_news_ui_get_states() {
+  // We want to re-use are taxonomy as much as we can
+  $states = array();
+  $parent_terms = ['Southwest', 'Southeast', 'Pacific', 'Northwest', 'Midwest', 'Alaska', 'Northeast'];
+    foreach($parent_terms as $term){
+        $parent = taxonomy_get_term_by_name($term, 'usgs_tags');
+        $parent_tid = key($parent);
+        $children_array = taxonomy_get_children($parent_tid);
+
+        foreach($children_array as $child) {
+            $states[$child->tid] = $child->name;
+        }
+    }
+  return $states;
+}
+
+
+/**
+ * Get a list of all available content types for USGS News UI.
+ */
+function usgs_news_ui_get_types() {
+  $enabled_types = variable_get('usgs_news_ui_enabled_types', array());
+
+  $node_types = node_type_get_types();
+  foreach($node_types as $name => $node_type) {
+    $types[$name]['label'] = $node_type->name;
+    $types[$name]['description'] = $node_type->description;
+    if(in_array($name, $enabled_types)) {
+      $types[$name]['enabled'] = 1;
+    }
+    else {
+      $types[$name]['enabled'] = 0;
+    }
+  }
+  return $types;
+}
+
+
+
+/*
+ * Implement hook_form_alter().
+ */
+
+function usgs_news_ui_form_alter(&$form, &$form_state, $form_id) {
+    // We want this on a specific node type
+    if ($form_id == 'news_article_node_form') {
+
+        $items['admin/content']['type'] = MENU_CALLBACK;
+        $items['admin/content/comment']['type'] = MENU_CALLBACK;
+        $items['admin/content/file']['type'] = MENU_CALLBACK;
+        $items['admin/content/webform']['type'] = MENU_CALLBACK;
+
+
+        $form['body']['und'][0]['format']['#access'] = FALSE;
+
+        $form['body']['und'][0]['format']['format']['#default_value'] = 'filtered_html';
+        $form['body']['und'][0]['format']['format']['#format'] = 'filtered_html';
+        $form['body']['und'][0]['format']['format']['#value']  = 'filtered_html';
+        $form['body']['und'][0]['#format'] = 'filtered_html';
+
+       $form['#after_build'][] = 'usgs_news_ui_news_article_node_form_after_build';
+       $form['body']['und'][0]['summary']['#access']=FALSE;
+
+    }
+
+
+    //Change the default display on the filter dropdowns
+    if($form['#id'] =='views-exposed-form-my-news-products-default') {
+        $field = array( 'field_news_article_pub_status_value'=>'Select Status',
+                        'field_news_article_type_value'=>'Select Type',
+                        'field_release_date_value'=>'Select Year',
+                        'field_usgs_tags_value'=>'Select State');
+        foreach ($field as $field_name=>$field_message) {
+            foreach ($form[$field_name]['#options'] as $key => &$option) {
+                if ($key == 'All') {
+                    $option = $field_message;
+                }
+            }
+        }
+    }
+}
+
+// afterbuild function
+function usgs_news_ui_news_article_node_form_after_build($form) {
+    $form['body']['und'][0]['format']['#access'] = FALSE;
+
+    // We want this on a specific field
+    //$form['body']['und'][0]['format']['format']['#default_value'] = 'filtered_html';
+    //$form['body']['und'][0]['format']['format']['#format'] = 'filtered_html';
+    //$form['body']['und'][0]['format']['format']['#value']  = 'filtered_html';
+    $form['body']['und'][0]['#format'] = 'filtered_html';
+    //$form['body']['und'][0]['format'] = 'filtered_html';
+
+    return $form;
+}
+
+/*
+function usgs_news_ui_form_alter(&$form,&$form_state,$form_id){
+
+  if($form['#node']->type == 'news_article'){
+    dsm($form);
+
+
+    $form['field_news_article_release_date']['#weight'] = 0;
+    $form['field_news_article_release_date']['#prefix'] = '<div class="row"><div class="col-md-6">';
+    $form['field_news_article_release_date']['#suffix'] = '</div>';
+    $form['field_news_article_release_date']['und'][0]['#title'] = '<h4><span class="label label-success">1</span>    Release Date</h4><br>
+    Select publishing date and time below. Remember to choose correct time zone.
+    ';
+
+    $title_field = $form['title'];
+    $title_field['#title'] = '<h4><span class="label label-success">2</span>    Title</h4><br>
+    Remember, title should not exceed 70 characters, including spaces.
+    ';
+
+    $form['title']['#weight'] = 1;
+    $form['title']['#type'] = 'container';
+    $form['title']['#prefix'] = '<div class="col-md-6">';
+    $form['title']['#suffix'] = '</div></div>';
+    $form['title']['und'][0] = $title_field;
+
+    $form['field_images']['#weight'] = 2;
+    $form['field_images']['#prefix'] = '<div class="row"><div class="col-md-10"><div class="row">';
+    $form['field_images']['#prefix'] = '</div>';
+    $form['field_images']['und'][0]['#title'] = '<h4><span class="label label-success">3</span>    Image</h4><br>
+    Select from our library of exiting imagery in the Multimedia Gallery or upload new imagery. This will be the main large image at the top of the news product.
+    ';
+
+    $form['body']['#weight'] = 3;
+    $form['body']['#prefix'] = '<div class="row">';
+    $form['body']['#prefix'] = '</div>';
+    $form['body']['und'][0]['#title'] = '<h4><span class="label label-success">5</span>    Body</h4><br>
+    Import full body, additional imagery, video, and audio of news product below.
+    ';
+
+    $form['content_tagging'] = array(
+
+
+    // Turn off the vertical tabs, only admins should see those
+    $admin_elements = array('path', 'comment_settings', 'options', 'author', 'additional_settings');
+    foreach ($admin_elements as $key) {
+        $form[$key]['#access'] = FALSE;
+    }
+    // We don't want revision information to be in a tab
+    $form['revision_information']['#access'] = FALSE;
+    unset($form['revision_information']['#group']);
+    $form['revision_information']['#collapsed'] = FALSE;
+
+
+
+    if ($form_id == 'usgs_node_node_form') {
+
+        $data = menu_get_item();
+
+        $context = $data['original_map'][1];
+        if ($context != 'news-article') {
+            $form['field_news_article_type']['#access'] = FALSE;
+            $form['field_news_article_subtitle']['#access'] = FALSE;
+            $form['field_release_date']['#access'] = FALSE;
+            $form['field_news_article_contacts']['#access'] = FALSE;
+            $form['field_news_article_notifications']['#access'] = FALSE;
+            $form['field_news_article_type']['#access'] = FALSE;
+        } else {
+
+            drupal_add_css(drupal_get_path('module', 'usgs_news_ui') . '/css/usgs_news_ui.css');
+            $form['body']['#label_display'] = 'hidden';
+
+            /*if ((strpos($key, '#') !== 0) && (strpos($key, 'field') === 0) && ($key != 'field_news_article_release_date')) {
+                dsm($form[$key]);
+                $form[$key]['#access'] = FALSE;
+            }
+
+        }
+
+        // @todo we will want to check this against the admin config for USGS news ui
+
+
+    }
+}
+
+  }
+}*/

@@ -1,0 +1,136 @@
+/*
+
+Homepage
+
+*/
+
+
+.carousel-caption{right:20%;left:20%;padding-bottom:110px;}
+
+.btn {border-radius: 0;}
+
+.btn-success {
+    color: #FFF;
+    background-color: #71A100;
+    border-color: #FFF;
+    border-radius: 0px;
+}
+
+.btn-success:hover,
+.btn-success:focus,
+.btn-success:active,
+.btn-success.active,
+.open .dropdown-toggle.btn-success {
+    color: #FFF;
+    background-color: #667c31;
+    border-color: #fff;
+}
+
+.carousel-inner .item {
+    background: #000;
+}
+.carousel-inner .item img {
+    opacity:0.5;
+}
+
+.carousel-inner {
+    background: #000;
+}
+
+.carousel-inner img {
+    opacity:0.5;
+}
+
+.phu-slider {
+    height: auto !important;
+}
+
+.fixed-carousel{
+    max-width:1170px;
+    margin-right:auto;
+    margin-left:auto;
+
+}
+
+.home_images {padding-top:60px;
+    padding-bottom:85px;
+    padding-left:auto;
+    padding-right:auto;
+    }
+
+.home_content {padding-top:10px;
+    text-align: center;}
+
+.home_content_mobile {padding:15px;
+    text-align: center;}
+
+/* Tabs */
+.accordion-heading {
+    padding: 15px;
+    color: #FFF;
+    background-color: #71A100;
+    margin-bottom: 1px;
+}
+.accordion-heading{
+    background-color: #71A100;
+}
+.accordion-heading a , a:hover, a:focus , a:active {
+    color: #FFF;
+}
+.accordion-heading a:hover, a:focus , a:active {
+    color: #FFF;
+}
+.accordion-heading a:focus , a:active {
+    color: #FFF;
+}
+.accordion-heading a:active {
+     color: #FFF;
+ }
+
+.moiblepadding {
+    padding: 15px;}
+
+.moiblepadding a {
+    color:#2A6496 }
+
+.moiblepadding a:hover, a:focus , a:active {
+    color: #2A6496;
+    text-decoration: underline;}
+
+h4 a {
+    color: #2A6496;
+}
+
+h4 a:hover, a:focus {
+    color: #2A6496;
+    text-decoration: underline;}
+a {
+    color:#1D5AAB
+}
+a:hover, a:focus {
+    color: #2A6496;
+    text-decoration: underline;}
+
+@media (min-width: 768px) and (max-width: 991px)
+{
+    .carousel-caption {margin-bottom: -45px;}
+}
+
+.accordion-heading > a.collapsed,
+.accordion-heading > a.collapsed:after{
+    content:"\f067";
+}
+
+.accordion-heading > a:after {
+    font-family: FontAwesome;
+    content:"\f068";
+    float: right;
+}
+
+.accordion-heading > a:hover,
+.accordion-heading > a:active,
+.accordion-heading > a:focus  {
+    text-decoration:none;
+}
+
+

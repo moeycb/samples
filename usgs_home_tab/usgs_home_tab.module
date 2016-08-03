@@ -1,0 +1,24 @@
+<?php
+/**
+ * The News Admin UI module provides content managers with simplified node
+ * edit forms when adding/editing News content types.
+ *
+ * In addition, it provides several pages that will serve as a dashboard for
+ * content managers to manage their content that they own.
+ *
+ * The module will define default views to begin with; however, we may need to
+ * hard code it similar to the way the node module does it for content.
+ */
+
+function usgs_home_tab_menu() {
+        $items = array();
+        return $items;
+}
+
+function usgs_home_tab_edit_access($node, $account = NULL) {
+    // If no user object is supplied, the access check is for the current user.
+    if (empty($account)) {
+        $account = $GLOBALS['user'];
+    }
+    return TRUE;
+}

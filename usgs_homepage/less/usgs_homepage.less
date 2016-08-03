@@ -1,0 +1,52 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : Jun 17, 2014, 8:08:17 AM
+    Author     : moey
+*/
+
+
+// Extra small grid
+//
+// Columns, offsets, pushes, and pulls for extra small devices like
+// smartphones.
+
+.make-usgs-homepage-section-image-text(xs);
+
+// Small
+//
+// Columns, offsets, pushes, and pulls for the small device range, from phones
+// to tablets.
+
+@media (min-width: @screen-sm-min) {
+  .make-usgs-homepage-section-image-text(sm);
+}
+
+
+// Medium grid
+//
+// Columns, offsets, pushes, and pulls for the desktop device range.
+
+@media (min-width: @screen-md-min) {
+  .make-usgs-homepage-section-image-text(md);
+}
+
+
+// Large grid
+//
+// Columns, offsets, pushes, and pulls for the large desktop device range.
+
+@media (min-width: @screen-lg-min) {
+  .make-usgs-homepage-section-image-text(lg);
+}
+
+
+.make-usgs-homepage-section-image-text(@class) {
+  .make-usgs-homepage-section-image-text-@{class} {
+    
+  }
+}
+

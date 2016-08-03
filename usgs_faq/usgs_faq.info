@@ -1,0 +1,17 @@
+name = USGS FAQ Module
+description = Provides fields and other features specific to FAQ content
+core = 7.x
+package = USGS
+project = usgs_faq
+
+scripts[] = 'js/usgs_faq.js'
+
+dependencies[] = email
+dependencies[] = image
+dependencies[] = link
+dependencies[] = panelizer
+dependencies[] = og
+dependencies[] = page_manager
+dependencies[] = panels 
+dependencies[] = views_ui
+dependencies[] = usgs_base_node

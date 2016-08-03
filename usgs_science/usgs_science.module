@@ -1,0 +1,45 @@
+<?php
+/**
+ *  So this module is pretty empty right now, but over time code that that adds
+ *  Science specific features will be provided here.
+ */
+
+/**
+ * Implement hook_form_alter().
+ */
+function usgs_science_form_alter(&$form, &$form_state, $form_id) {
+  // We only want to alter the form when adding usgs content, we use menu_get_item()
+  // as opposed to arg() because drupal documentation recommends not using arg
+  // when possible.
+  $menu_item = menu_get_item();
+  //dsm($form);
+  if($form_id == 'usgs_node_node_form' && usgs_base_node_is_add_usgs_content($menu_item)) {
+    if($menu_item['page_callback'] == 'node_add') {
+      // Code that applies to Science content would go here.
+    }
+  }
+}
+
+/**
+ *
+ * Implement hook_ctools_plugin_directory().
+ *
+ * @param $module
+ * @param $plugin
+ * @return string
+ */
+function usgs_science_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && $plugin == 'content_types') {
+    return "plugins/" . $plugin;
+  }
+}
+
+/**
+ * Implementation of hook_preprocess().
+ */
+function usgs_science_preprocess_usgs_layout_1(&$vars) {
+  module_load_include('inc', 'usgs_science', 'plugins/content_types/usgs_plugin_science_tab');
+
+  $view = usgs_science_tab_render(NULL, NULL, NULL, NULL);
+  $vars['science'] = $view->content;
+}

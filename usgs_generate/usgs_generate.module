@@ -1,0 +1,287 @@
+<?php
+
+function usgs_generate_menu(){
+  $items['admin/config/usgs-generate'] = array(
+    'title' => 'USGS Generate',
+    'description' => 'Generate some usgs_node content',
+    'page callback' => 'system_admin_menu_block_page',
+    'page arguments' => array('administer site configuration'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/config/usgs-generate/nodes'] = array(
+    'title' => 'USGS Generate Nodes',
+    'description' => 'Generate nodes',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('usgs_generate_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/config/usgs-generate/landing-pages'] = array(
+    'title' => 'USGS Generate Landing Pages',
+    'description' => 'Generate landing pages',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('usgs_generate_landing_pages_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/config/usgs-generate/atoms'] = array(
+    'title' => 'USGS Generate Atoms',
+    'description' => 'Generate atoms',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('usgs_generate_scald_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+
+  return $items;
+}
+
+function usgs_generate_form(){
+  $form['submit'] = [
+    '#type' => 'submit',
+    '#value' => 'Generate',
+  ];
+
+  return $form;
+}
+
+function usgs_generate_form_submit($form, &$form_state){
+
+  set_time_limit(0);
+
+  $sids = usgs_generate_scald_form_submit();
+
+  $vocab = taxonomy_vocabulary_machine_name_load('usgs_tags');
+
+  $terms = taxonomy_get_tree($vocab->vid, 0, 1);
+
+  $missionAreas = $regions = $products = "";
+
+  foreach($terms as $t){
+    if($t->name == 'Mission Areas')
+      $missionAreas = $t;
+    else if($t->name == 'Regions')
+      $regions = $t;
+    else if($t->name == 'Products')
+      $products = $t;
+  }
+
+  $mArray = [$missionAreas->tid];
+  $rArray = [];
+  $pArray = [];
+
+  $terms = taxonomy_get_tree($vocab->vid,$missionAreas->tid);
+
+  foreach($terms as $t)
+    $mArray[] = $t->tid;
+
+  $terms = taxonomy_get_tree($vocab->vid,$regions->tid);
+
+  foreach($terms as $t)
+    $rArray[] = $t->tid;
+
+  $terms = taxonomy_get_tree($vocab->vid,$products->tid);
+
+  foreach($terms as $t)
+    $pArray[] = $t->tid;
+
+
+  $operations = [];
+
+  foreach($mArray as $ma){
+    $operations[] = [
+      'usgs_base_node_batch_create_tagged_nodes',
+      [
+        $ma,
+        $rArray,
+        $pArray,
+        $sids
+      ],
+    ];
+  }
+
+  $batch = [
+    'operations' => $operations,
+    'title' => 'Creating Nodes',
+    'init_message' => 'Begin Creation',
+    'progress_message' => 'Created @current of @total',
+    'error_message' => 'Uh Oh. A fire broke out and burned it all down.',
+    'file' => drupal_get_path('module', 'usgs_base_node') . '/usgs_base_node.files_migration.inc',
+  ];
+
+  batch_set($batch);
+
+}
+
+function usgs_base_node_batch_create_tagged_nodes($missionArea, $regionsArr, $productArr, $sids){
+  module_load_include('inc', 'usgs_generate', 'scald.usgs_sample_content');
+
+  $regionsCount = rand(1,count($regionsArr));
+  $prodCount = rand(1,count($productArr));
+
+  $body = [
+    'und' => [
+      [
+        'value' => 'This is my body',
+        'summary' => 'This is my summary, which is longer than my body, which is weird',
+        'format' => 'filtered_html'
+      ]
+    ]
+  ];
+
+  for($i = 0; $i < 10; $i++){
+
+    $regionCopy = $regionsArr;
+    $productCopy = $productArr;
+
+    $node = new stdClass();
+    $node->type = 'usgs_node';
+    $node->title = uniqid("Generated Node: ");
+    $node->language = LANGUAGE_NONE;
+    node_object_prepare($node);
+    $node->uid = 1;
+    $node->status = 1;
+    $node->promote = 0;
+    $node->comment = 0;
+
+    // Utilize devel_generate to do some stuff
+    module_load_include('inc', 'devel_generate', 'text.devel_generate');
+    module_load_include('inc', 'devel_generate', 'devel_generate');
+    $instances = field_info_instances('node', 'usgs_node');
+    $field = field_info_field('body');
+    $result = _text_devel_generate(NULL, $field, $instances['body'], NULL);
+    $node->body['und'][] = $result;
+
+    $node->field_images[$node->language][0]['sid'] = $sids[rand(0,count($sids) - 1)];
+    $node->field_usgs_tags['und'][]['tid'] = $missionArea;
+    foreach(range(0,$regionsCount) as $r){
+      $k = rand(0,count($regionCopy) - 1);
+      if(empty($regionCopy[$k]))
+        continue;
+      $node->field_usgs_tags['und'][]['tid'] = $regionCopy[$k];
+      unset($regionCopy[$k]);
+    }
+    foreach(range(0,$prodCount) as $r){
+      $k = rand(0,count($productCopy) - 1);
+      if(empty($productCopy[$k]))
+        continue;
+      $node->field_usgs_tags['und'][]['tid'] = $productCopy[$k];
+      unset($productCopy[$k]);
+    }
+    $node = node_submit($node);
+    node_save($node);
+  }
+
+}
+
+function usgs_generate_scald_form(){
+  $form['submit'] = [
+    '#type' => 'submit',
+    '#value' => 'Generate',
+  ];
+
+  return $form;
+}
+
+function usgs_generate_scald_form_submit($form = NULL, &$form_state = NULL){
+  module_load_include('inc', 'usgs_generate', 'scald.usgs_sample_content');
+  $atoms = [];
+  for($i=0; $i<10; $i++) {
+    $atom = usgs_sample_content_create_scald_atom();
+    scald_atom_save($atom);
+    $atoms[] = $atom->sid;
+  }
+
+  return $atoms;
+}
+
+function usgs_generate_landing_pages_form(){
+  $form['submit'] = [
+    '#type' => 'submit',
+    '#value' => 'Generate',
+  ];
+
+  return $form;
+}
+
+/**
+ * Form submit handler that basically runs the code to generate the landing pages.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function usgs_generate_landing_pages_form_submit($form, &$form_state){
+  $results[] = taxonomy_get_term_by_name('Mission Areas');
+  $results[] = taxonomy_get_term_by_name('Regions');
+
+  // taxonomy_get_term_by_name is weird and returns an array so we clean this up
+  foreach($results as $key => $result) {
+    $terms[] = current($result);
+  }
+
+  dsm(node_load(581));
+  generate_landing_pages($terms);
+
+  return;
+}
+
+function generate_landing_pages($terms, $parent = NULL) {
+  foreach($terms as $term) {
+    $node = _create_node_from_term($term, $parent);
+    $children = taxonomy_get_children($term->tid);
+    if(!empty($children)) {
+      generate_landing_pages($children, $node);
+    }
+  }
+}
+
+/**
+ * Helper function that takes a term object and builds a node from the data and returns
+ * it after saving it.
+ *
+ * @param $term
+ */
+function _create_node_from_term($term, $parent_node = NULL) {
+  module_load_include('inc', 'usgs_generate', 'scald.usgs_sample_content');
+  module_load_include('inc', 'devel_generate', 'devel_generate');
+  global $user;
+  // Create a scald atom image to attach to this node
+  $atom = usgs_sample_content_create_scald_atom();
+  scald_atom_save($atom);
+
+
+  $node = new stdClass();
+  $node->type = 'usgs_node';
+  $node->title = $term->name;
+  $node->language = LANGUAGE_NONE;
+  node_object_prepare($node);
+  $node->uid = $user->uid;
+  $node->status = 1;
+  $node->promote = 0;
+  $node->comment = 0;
+
+  // Utilize devel_generate to do some stuff
+  module_load_include('inc', 'devel_generate', 'text.devel_generate');
+  module_load_include('inc', 'devel_generate', 'devel_generate');
+  $instances = field_info_instances('node', 'usgs_node');
+  $field = field_info_field('body');
+  $result = _text_devel_generate(NULL, $field, $instances['body'], NULL);
+  $node->body['und'][] = $result;
+
+  $node->field_images[$node->language][0]['sid'] = $atom->sid;
+  $node->group_group['und'][0]['value'] = 1;
+
+  if(!empty($parent_node)) {
+    $node->og_group_ref['und'][0]['target_id'] = $parent_node->nid;
+  }
+
+  $node = node_submit($node);
+  node_save($node);
+  return $node;
+}

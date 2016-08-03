@@ -1,0 +1,4 @@
+name = USGS Pagination
+description = Contains functions to create a pagination display
+core = 7.x
+package = USGS

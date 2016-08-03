@@ -1,0 +1,25 @@
+<?php
+
+/**
+ *
+ * Implement hook_ctools_plugin_directory().
+ *
+ * @param $module
+ * @param $plugin
+ * @return string
+ */
+function usgs_maps_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && $plugin == 'content_types') {
+    return "plugins/" . $plugin;
+  }
+}
+
+/**
+ * Implementation of hook_preprocess().
+ */
+function usgs_maps_preprocess_usgs_layout_1(&$vars) {
+  module_load_include('inc', 'usgs_maps', 'plugins/content_types/usgs_maps_section');
+
+  $view = usgs_maps_tab_render(NULL, NULL, NULL, NULL);
+  $vars['maps'] = $view->content;
+}

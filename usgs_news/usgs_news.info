@@ -1,0 +1,11 @@
+name = USGS News Module
+description = Provides fields and other features specific to News content
+core = 7.x
+package = USGS
+project = usgs_news
+
+dependencies[] = date_popup
+dependencies[] = date_tools
+
+
+

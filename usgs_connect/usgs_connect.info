@@ -1,0 +1,13 @@
+name = USGS Connect
+description = USGS Connect
+package = USGS
+core = 7.x
+
+dependencies[] = ctools
+dependencies[] = image
+;dependencies[] = media
+dependencies[] = panels
+dependencies[] = page_manager
+dependencies[] = og
+dependencies[] = phone
+

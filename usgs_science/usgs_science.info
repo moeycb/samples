@@ -1,0 +1,10 @@
+name = USGS Science Module
+description = Provides fields and other features specific to Science content
+core = 7.x
+package = USGS
+project = usgs_science
+
+dependencies[] = usgs_pagination
+
+
+

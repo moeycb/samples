@@ -1,0 +1,206 @@
+<?php
+/**
+ * The News Admin UI module provides content managers with simplified node
+ * edit forms when adding/editing News content types.
+ *
+ * In addition, it provides several pages that will serve as a dashboard for
+ * content managers to manage their content that they own.
+ *
+ * The module will define default views to begin with; however, we may need to
+ * hard code it similar to the way the node module does it for content.
+ */
+
+function usgs_news_menu() {
+  /*$items['admin/content/news-article'] = array(
+    'title' => 'News Articles',
+    'description' => 'Manage news content.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('usgs_news_ui_admin_content'),
+    'access callback' => 'usgs_news_ui_access',
+    'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
+    'weight' => -10,
+    'file' => 'modules/usgs_news_ui/usgs_news_ui.admin.inc',
+  );
+
+  // Admin Settings.
+  $items['admin/config/content/usgs-ui'] = array(
+    'title' => 'USGS UI Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('usgs_news_ui_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'description' => 'Global configuration of USGS News UI.',
+    'file' => 'modules/usgs_news_ui/usgs_news_ui.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+*/
+  // Add additional node edit forms specific for News content
+  $tabs = array(
+    'edit-contacts' => 'Contacts',
+    'edit-partners' => 'Partners',
+  );
+
+  /*$weight = 10;
+  foreach($tabs as $tab => $label) {
+    $items['node/%node/' . $tab] = array(
+      'title' => $label,
+      'page callback' => 'usgs_news_page_edit',
+      'page arguments' => array(2,1),
+      'access callback' => 'usgs_news_edit_access',
+      'access arguments' => array(1),
+      'weight' => $weight,
+      'type' => MENU_LOCAL_TASK,
+      'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+      'file' => 'usgs_news.pages.inc',
+    );
+    $weight++;
+  }
+
+  return $items;
+  */
+}
+
+function usgs_news_theme_registry_alter(&$theme_registry){
+  // Define path to views templates in this module.
+  $module_path = drupal_get_path('module', 'usgs_news') . '/templates/views';
+  // Find all .tpl.php files in this module's folder recursively.
+  $template_file_objects = drupal_find_theme_templates($theme_registry, '.tpl.php', $module_path);
+  // Iterate through all found template file objects.
+  foreach ($template_file_objects as $key => $template_file_object) {
+    // If the template has not already been overridden by a theme.
+    if (!isset($theme_registry[$key]['theme path']) || !preg_match('#/themes/#', $theme_registry[$key]['theme path'])) {
+      // Alter the theme path and template elements.
+      $theme_registry[$key]['theme path'] = $module_path;
+      $theme_registry[$key] = array_merge($theme_registry[$key], $template_file_object);
+      $theme_registry[$key]['type'] = 'module';
+    }
+  }
+}
+
+/**
+ * Implements hook_scald_contexts().
+ */
+function usgs_news_scald_contexts() {
+  //Create a context for Scald to render the image
+  return array(
+    'top_story_carousel' => array(
+      'title' => t('Top Story Carousel'),
+      'description' => t('For the TS carousel.'),
+      'render_language' => 'XHTML',
+      'parseable'       => TRUE,
+      'formats'    => array(
+        'image' => array('jpeg', 'png', 'passthrough'),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_scald_render().
+ */
+function usgs_news_scald_render($atom, $context, $options) {
+  return scald_scald_render($atom, $context, $options);
+}
+/**
+ * Determines whether the current user may perform the operation on the node.
+ *
+ * @param $node
+ *   The node object on which the operation is to be performed, or node type
+ *   (e.g. 'forum') for "create" operation.
+ * @param $account
+ *   Optional, a user object representing the user for whom the operation is to
+ *   be performed. Determines access for a user other than the current user.
+ *
+ * @return boolean
+ *   TRUE if the operation may be performed, FALSE otherwise.
+ */
+function usgs_news_edit_access($node, $account = NULL) {
+  // If no user object is supplied, the access check is for the current user.
+  if (empty($account)) {
+    $account = $GLOBALS['user'];
+  }
+  return TRUE;
+}
+
+
+function _get_news_article_types() {
+  return (array(
+    'featured' => 'Featured Story',
+    'state' => 'State News Release',
+    'national' => 'National News Release',
+    'snippet' => 'Science Snippet',
+    'employee' => 'Employee in the News',
+    'technical' => 'Technical Announcement'
+  )
+  );
+
+}
+
+function _get_news_status_types() {
+  return (array(
+    '1' => 'Published',
+    '0' => 'Draft',
+  )
+  );
+}
+
+/**
+ * Implement hook_form_alter().
+ *
+ * We want to suppress the fields specific for news if user is on a different type.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+/*
+function usgs_news_form_alter(&$form, &$form_state, $form_id) {
+  $menu_item = menu_get_item();
+  $suppress_fields = FALSE;
+  $news_article_tid = variable_get('news_article_tid');
+
+  if ($form_id == 'usgs_node_node_form') {
+    if (isset($menu_item['page_arguments'][3])) {
+      if ($menu_item['page_arguments'][3] != $news_article_tid) {
+        $suppress_fields = TRUE;
+      }
+    }
+    elseif ($menu_item['path'] == 'node/%/edit') {
+      $usgs_node = $menu_item['page_arguments'][0];
+      $usgs_node->field_usgs_tags['und'] = empty($usgs_node->field_usgs_tags['und']) ? array() : $usgs_node->field_usgs_tags['und'];
+      foreach($usgs_node->field_usgs_tags['und'] as $value) {
+        $tids[] = $value['tid'];
+      }
+      if (!in_array($news_article_tid, $tids)) {
+        $suppress_fields = TRUE;
+      }
+    }
+  }
+
+  if($suppress_fields == TRUE) {
+    $form['field_release_date']['#access'] = FALSE;
+    $form['field_news_article_subtitle']['#access'] = FALSE;
+    $form['field_news_article_type']['#access'] = FALSE;
+    $form['field_news_article_contacts']['#access'] = FALSE;
+    $form['field_news_article_notifications']['#access'] = FALSE;
+    $form['field_news_article_addtl_notify']['#access'] = FALSE;
+    $form['field_partners']['#access'] = FALSE;
+    $form['field_news_article_pub_status']['#access'] = FALSE;
+  }
+}
+*/
+
+/**
+ * Implementation of hook_preprocess().
+ */
+function usgs_news_preprocess_usgs_layout_1(&$vars) {
+  module_load_include('inc', 'usgs_news', 'plugins/content_types/usgs_news_tab');
+  module_load_include('inc', 'usgs_news', 'plugins/content_types/usgs_top_news');
+
+  $view = usgs_news_tab_render(NULL, NULL, NULL, NULL);
+  $vars['news'] = $view->content;
+
+  $view = usgs_top_news_render(NULL,NULL,NULL,NULL);
+  $vars['top_news'] = $view->content;
+}
+

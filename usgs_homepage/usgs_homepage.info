@@ -1,0 +1,10 @@
+name = USGS Home Page
+description = Provides elements for homepage.
+package = USGS
+core = 7.x
+configure = admin/structure/usgs_homepage
+
+dependencies[] = panels_ipe
+dependencies[] = page_manager
+
+

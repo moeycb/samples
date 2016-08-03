@@ -1,0 +1,46 @@
+<?php
+/**
+ *  So this module is pretty empty right now, but over time code that that adds
+ *  Data and Tools specific features will be provided here.
+ */
+
+/**
+ * Implement hook_form_alter().
+ */
+function usgs_dnt_form_alter(&$form, &$form_state, $form_id) {
+  // We only want to alter the form when adding usgs content, we use menu_get_item()
+  // as opposed to arg() because drupal documentation recommends not using arg
+  // when possible.
+  $menu_item = menu_get_item();
+  //dsm($form);
+  if($form_id == 'usgs_node_node_form' && usgs_base_node_is_add_usgs_content($menu_item)) {
+    // We want to make sure new content is tagged with data-and-tools
+    if($menu_item['page_callback'] == 'node_add') {
+      // Add any code that needs to be done here.
+    }
+  }
+}
+
+/**
+ *
+ * Implement hook_ctools_plugin_directory().
+ *
+ * @param $module
+ * @param $plugin
+ * @return string
+ */
+function usgs_dnt_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && $plugin == 'content_types') {
+    return "plugins/" . $plugin;
+  }
+}
+
+/**
+ * Implementation of hook_preprocess().
+ */
+function usgs_dnt_preprocess_usgs_layout_1(&$vars) {
+  module_load_include('inc', 'usgs_dnt', 'plugins/content_types/usgs_plugin_dnt_tab');
+
+  $view = usgs_dnt_tab_render(NULL, NULL, NULL, NULL);
+  $vars['dnt'] = $view->content;
+}

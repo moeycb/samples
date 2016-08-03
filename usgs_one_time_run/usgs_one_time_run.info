@@ -1,0 +1,5 @@
+name = usgs_one_time_run
+description = Run stuff once only
+core = 7.x
+package = USGS
+version = 7.x-1.0

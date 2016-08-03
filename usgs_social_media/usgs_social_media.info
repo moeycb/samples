@@ -1,0 +1,8 @@
+name = USGS Social Media Module
+description = Provides fields and other features specific to Social Media content
+core = 7.x
+package = USGS
+project = usgs_social_media
+
+
+

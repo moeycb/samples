@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the usgs_entity module.
+ */
+
+
+/**
+ * Implements hook_install().
+ */
+function usgs_homepage_install() {
+  // When this is enabled, we want to take-over the homepage settings.
+  variable_set('site_frontpage', 'home');
+}
+
+/**
+ * Implements hook_install().
+ */
+function usgs_homepage_disable() {
+  // When module is disabled, we want to make sure the homepage goes back to default
+  // behavior
+  variable_set('site_frontpage', '');
+}

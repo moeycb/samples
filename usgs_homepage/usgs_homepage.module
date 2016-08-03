@@ -1,0 +1,141 @@
+<?php
+
+/**
+ * @file
+ *
+ */
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ *
+ * It simply tells panels where to find the .inc files that define various
+ * args, contexts, content_types. In this case the subdirectories of
+ * usgs_plugins/panels are used.
+ */
+function usgs_homepage_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && !empty($plugin)) {
+    return "plugins/$plugin";
+  }
+}
+
+/**
+ * Implement hook_ctools_plugin_api().
+ *
+ * Provide default panels and pages. For some help you can check
+ * ctools_plugin_examples modules.
+ */
+function usgs_homepage_ctools_plugin_api($module, $api) {
+  if ($module == 'page_manager' && $api == 'pages_default') {
+    return array('version' => 1);
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function usgs_homepage_theme() {
+  $path = drupal_get_path('module', 'usgs_homepage') . '/templates';
+  $theme_hooks = array(
+    'homepage_real_time_data' => array(
+      'template' => 'homepage-real-time-data',
+      'variables' => array(),
+      'path' => drupal_get_path('module', 'usgs_homepage') . '/templates',
+    ),
+    'homepage_our_science' => array(
+      'template' => 'homepage-our-science',
+      'variables' => array(),
+      'path' => drupal_get_path('module', 'usgs_homepage') . '/templates',
+    ),
+    'homepage_products' => array(
+      'template' => 'homepage-products',
+      'variables' => array(),
+      'path' => drupal_get_path('module', 'usgs_homepage') . '/templates',
+    )
+  );
+  
+  return $theme_hooks;
+}
+
+/**
+ * Implementation of hook_preprocess_usgs_homepage().
+ * 
+ * @param type $vars
+ */
+function usgs_homepage_preprocess_usgs_homepage(&$vars) {
+  // Hardcode the actual sections for now. Later need to build in the 
+  // admin UI. Currently there are four sections on the homepage -
+  //   1) Main Carousel
+  //   2) Our Science
+  //   3) Real-Time Data Information
+  //   4) Science Products
+  // For now we deal only with the last three, the main carousel we will
+  // implement later.
+  $sections[] = array(
+    'title' => t(strtoupper('Our Science')),
+    'text' => t('How do we make smart decisions about a changing world? Start with Science.'),
+    'image_fid' => 270,
+  );
+  $sections[] = array(
+    'title' => t(strtoupper('Real-Time Data Information')),
+    'text' => t('This is science data denotes information that is delivered immediately after collection. There is no delay in the timeliness of the information provided.'),
+    'image_fid' => 271,
+  );
+  $sections[] = array(
+    'title' => t(strtoupper('Science Products')),
+    'text' => t('One of our primary functions is to provide quality scientific information to the public.'),
+    'image_fid' => 272,
+  );
+  $vars['sections'] = '';
+  foreach ($sections as $key => $section) {
+    $vars['sections'] .= theme('usgs_homepage_section', array('section' => $section));
+  }
+  
+}
+
+/**
+ * Implementation of hook_preprocess_HOOK().
+ * 
+ * @param type $vars
+ */
+function usgs_homepage_preprocess_homepage_real_time_data(&$vars) {
+  global $base_url;
+  $vars['base'] = drupal_get_path ( 'module', 'usgs_homepage' ) . '/';
+  $vars['link'] = $base_url . '/' ;
+
+  $options = array(
+    'group' => CSS_THEME,
+  );
+  drupal_add_css(drupal_get_path('module','usgs_homepage') . '/css/homepage.css', $options);
+}
+
+/**
+ * Implementation of hook_preprocess_HOOK().
+ *
+ * @param type $vars
+ */
+function usgs_homepage_preprocess_homepage_our_science(&$vars) {
+  global $base_url;
+  $vars['base'] = drupal_get_path ( 'module', 'usgs_homepage' ) . '/';
+  $vars['link'] = $base_url . '/' ;
+
+  $options = array(
+    'group' => CSS_THEME,
+  );
+  drupal_add_css(drupal_get_path('module','usgs_homepage') . '/css/homepage.css', $options);
+}
+
+/**
+ * Implementation of hook_preprocess_HOOK().
+ *
+ * @param type $vars
+ */
+function usgs_homepage_preprocess_homepage_products(&$vars) {
+  global $base_url;
+  $vars['base'] = drupal_get_path ( 'module', 'usgs_homepage' ) . '/';
+  $vars['link'] = $base_url . '/' ;
+
+  $options = array(
+    'group' => CSS_THEME,
+  );
+  drupal_add_css(drupal_get_path('module','usgs_homepage') . '/css/homepage.css', $options);
+}

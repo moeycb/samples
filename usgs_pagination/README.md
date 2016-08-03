@@ -1,0 +1,1 @@
+This module contains 1 function that creates the pagination html.

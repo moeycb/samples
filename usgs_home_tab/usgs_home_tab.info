@@ -1,0 +1,5 @@
+name = USGS Home Tab Base
+description = Creates the Home tab to the mission area and regions pages
+core = 7.x
+package = USGS
+project = usgs_home_tab

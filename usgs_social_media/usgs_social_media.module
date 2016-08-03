@@ -1,0 +1,42 @@
+<?php
+/**
+ *
+ * Implement hook_ctools_plugin_directory().
+ *
+ * @param $module
+ * @param $plugin
+ * @return string
+ */
+function usgs_social_media_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && $plugin == 'content_types') {
+    return "plugins/" . $plugin;
+  }
+}
+
+/**
+ * Implement hook_form_alter().
+ */
+function usgs_social_media_form_alter(&$form, &$form_state, $form_id) {
+    // We only want to alter the form when adding usgs content, we use menu_get_item()
+    // as opposed to arg() because drupal documentation recommends not using arg
+    // when possible.
+    $menu_item = menu_get_item();
+
+    if($form_id == 'usgs_node_node_form' && usgs_base_node_is_add_usgs_content($menu_item)) {
+        // We want to make sure new content is tagged with data-and-tools
+        if($menu_item['page_callback'] == 'node_add') {
+
+            // Add any code that needs to be done here.
+        }
+    }
+}
+
+/**
+ * Implementation of hook_preprocess().
+ */
+function usgs_social_media_preprocess_usgs_layout_1(&$vars) {
+  module_load_include('inc', 'usgs_social_media', 'plugins/content_types/usgs_social_media_tab');
+
+  $view = usgs_social_tab_render(NULL, NULL, NULL, NULL);
+  $vars['social'] = $view->content;
+}

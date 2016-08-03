@@ -1,0 +1,131 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the standard installation profile.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Perform actions to set up the site for this profile.
+ *
+ * @see system_install()
+ */
+function usgs_connect_install() {
+
+    $vocabulary = taxonomy_vocabulary_machine_name_load('usgs_tags');
+    $vid = $vocabulary ? $vocabulary->vid : false;
+    usgs_connect_install_taxonomy($vid);
+
+
+    // Connect content has additional meta-data that it needs, we want to create it
+    // as part of the module.  We do need to check and make sure that the usgs_node
+    // exists.  Otherwise, the installation could throw an error.
+    $node_types = array_keys(node_type_get_types());
+
+  // Add connect fields
+  usgs_add_connect_fields();
+}
+
+function usgs_connect_install_taxonomy($vid) {
+    $parent_array = taxonomy_get_term_by_name('Products', 'usgs_tags');
+    $parent_tid = key($parent_array);
+
+    if ($parent_tid) {
+        $terms = array();
+        $tree = taxonomy_get_tree($vid, $parent_tid, 1);
+        foreach ($tree AS $term) {
+            $terms[$term->tid] = $term->name;
+        }
+
+        if (!in_array('Connect', $terms)) {
+            $term_obj = new stdClass();
+            $term_obj->name = 'Connect';
+            $term_obj->description = 'Connect Taxonomies';
+            $term_obj->vid = $vid;
+            $term_obj->parent = $parent_tid;
+            $term_obj->weight = 9;
+
+            $result = taxonomy_term_save($term_obj);
+            if ($result != SAVED_NEW && $result != SAVED_UPDATED) {
+                drupal_set_message('There was an error adding the Connect term to the main taxonomy.', 'status');
+            }
+         } else {
+            drupal_set_message('Connect term already exists in Products');
+        }
+
+      
+    }
+}
+
+function usgs_add_connect_fields(){
+  $field = [];
+
+  $field['field_full_name'] = [
+    'field_name' => 'field_full_name',
+    'type' => 'text',
+  ];
+
+  $field['field_email'] = [
+    'field_name' => 'field_email',
+    'type' => 'text',
+  ];
+
+  $field['field_phone'] = [
+    'field_name' => 'field_phone',
+    'type' => 'text',
+    'settings' => [
+      'country' => 'ca',
+    ],
+  ];
+
+  $instance = [];
+
+  $instance['field_full_name'] = [
+    'field_name' => 'field_full_name',
+    'entity_type' => 'node',
+    'label' => 'Full Name',
+    'bundle' => 'usgs_node',
+    'required' => TRUE,
+    'settings' => [ 'user_register_form' => 1],
+    'widget' => [
+      'type' => 'textfield',
+    ],
+  ];
+
+  $instance['field_email'] = [
+    'field_name' => 'field_email',
+    'entity_type' => 'node',
+    'label' => 'Email',
+    'bundle' => 'usgs_node',
+    'required' => TRUE,
+    'settings' => [ 'user_register_form' => 1],
+    'widget' => [
+      'type' => 'textfield',
+    ],
+  ];
+
+  $instance['field_phone'] = [
+    'field_name' => 'field_phone',
+    'entity_type' => 'node',
+    'label' => 'Phone',
+    'bundle' => 'usgs_node',
+    'required' => TRUE,
+    'settings' => [
+      'user_register_form' => 1,
+    ],
+    'widget' => [
+      'type' => 'phone_textfield',
+    ],
+  ];
+
+
+  foreach($field as $f){
+    if(!field_info_field($f['field_name'])){
+      field_create_field($f);
+      field_create_instance($instance[$f['field_name']]);
+    }
+  }
+
+}

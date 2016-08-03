@@ -1,0 +1,372 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the standard installation profile.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Perform actions to set up the site for this profile.
+ *
+ * @see system_install()
+ */
+function usgs_news_install() {
+  // News content has additional meta-data that it needs, we want to create it
+  // as part of the module.  We do need to check and make sure that the usgs_node
+  // exists.  Otherwise, the installation could throw an error.
+
+  //Add News Articles to taxonomy
+  //get usgs_tags vocab id
+  $vocab_obj = taxonomy_vocabulary_machine_name_load('usgs_tags');
+  $vocab_id = $vocab_obj->vid;
+
+  $parent_name = 'Products';
+  $parent_array = taxonomy_get_term_by_name($parent_name, 'usgs_tags');
+  $parent_tid = key($parent_array);
+
+  $term_obj = new stdClass();
+  $term_obj->name = 'News Article';
+  $term_obj->vid = $vocab_id;
+  $term_obj->parent = $parent_tid;
+  $term_obj->weight = 8;
+
+  $result = taxonomy_term_save($term_obj);
+  variable_set('news_article_tid', $term_obj->tid);
+  if ($result != SAVED_NEW) {
+    drupal_set_message('There was an error adding the News Article term to the main taxonomy.');
+  }
+  else {
+    drupal_set_message('News Article module successfully installed. News Article added to taxonomy');
+  }
+
+
+  $node_types = array_keys(node_type_get_types());
+  if (in_array('usgs_node', $node_types)) {
+    drupal_set_message('The USGS Base Node exists. The Release Date, Subtitle, Article Type, Contacts, and Notifications fields were created and added.', 'status');
+    // Create the release date field
+    if (!field_info_field('field_release_date')) {
+      $field[] = array(
+        'field_name' => 'field_release_date',
+        'type' => 'datetime',
+        'cardinality' => 1,
+        'settings' => array(
+          'cache_count' => 4,
+          'cache_enabled' => 0,
+          'granularity' => array(
+            'day' => 'day',
+            'hour' => 'hour',
+            'minute' => 'minute',
+            'month' => 'month',
+            'second' => 0,
+            'year' => 'year',
+          ),
+          'timezone_db' => 'UTC',
+          'todate' => '',
+          'tz_handling' => 'site',
+        ),
+      );
+    }
+
+    if (!field_info_field('field_news_article_subtitle')) {
+      $field[] = array(
+        'field_name' => 'field_news_article_subtitle',
+        'type' => 'text',
+        'settings' => array(
+          'label' => 'SubTitle',
+          'description' => 'Add the subtitle for the article in this field',
+
+        ),
+      );
+    }
+    if (!field_info_field('field_news_article_type')) {
+      $field[] = array(
+        'field_name' => 'field_news_article_type',
+        'type' => 'list_text',
+        'settings' => array(
+          'allowed_values' => _get_news_article_types()
+        )
+      );
+    }
+    if (!field_info_field('field_news_article_contacts')) {
+      $field[] = array(
+        'field_name' => 'field_news_article_contacts',
+        'type' => 'entityreference',
+        'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+        'settings' => array(
+          'target_type' => 'node',
+          'handler_settings' => array(
+            'target_bundles' => array('usgs_node')
+          ),
+        ),
+      );
+    }
+    if (!field_info_field('field_partners')) {
+      $field[] = array(
+        'field_name' => 'field_partners',
+        'type' => 'entityreference',
+        'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+        'settings' => array(
+          'target_type' => 'node',
+          'handler_settings' => array(
+            'target_bundles' => array('usgs_node')
+          ),
+        ),
+      );
+    }
+
+    //To be used in the future
+    /*
+  $field[] = array(
+        'field_name' => 'field_news_article_notifications',
+        'type' => 'entityreference',
+        'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+        'settings' => array(
+            'target_type' => 'profile2',
+            'handler_settings' => array(
+                'target_bundles' => array('profile2')
+            ),
+        ),
+    );
+*/
+
+    if (!field_info_field('field_news_article_notifications')) {
+      $field[] = array(
+        'field_name' => 'field_news_article_notifications',
+        'type' => 'list_text',
+        'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+        'settings' => array(
+          'allowed_values' => array(
+            1 => 'Barbara Wainman',
+            2 => 'A.B. Wade',
+            3 => 'David Orzman',
+            4 => 'Vic Hines',
+            5 => 'Justin Pressfield',
+            6 => 'David Hebert',
+            7 => 'Karen Armstrong',
+            8 => 'Tim West'
+          )
+        ),
+      );
+    }
+
+    if (!field_info_field('field_news_article_addtl_notify')) {
+      $field[] = array(
+        'field_name' => 'field_news_article_addtl_notify',
+        'type' => 'text',
+        'settings' => array(
+          'label' => 'Additional Notifications',
+          'description' => 'Additional emails for news article notifications for people not stored in AD or Drupal as users.',
+
+        ),
+      );
+    }
+    if (!field_info_field('field_news_article_pub_status')) {
+      $field[] = array(
+        'field_name' => 'field_news_article_pub_status',
+        'type' => 'list_text',
+        'settings' => array(
+          'allowed_values' => _get_news_status_types(),
+          'label' => 'Status of the news article.',
+          'description' => ' Published / Not Published',
+        )
+      );
+    }
+
+    foreach ($field as $f) {
+      field_create_field($f);
+    }
+
+    //Exported field_instance: 'node-usgs_node-field_release_date'
+    $help = t('Enter the date to release the article.');
+    $instance = array(
+      'bundle' => 'usgs_node',
+      'deleted' => 0,
+      'description' => $help,
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'module' => 'date',
+          'settings' => array(
+            'format_type' => 'long',
+            'fromto' => 'both',
+            'multiple_from' => '',
+            'multiple_number' => '',
+            'multiple_to' => '',
+          ),
+          'type' => 'date_default',
+          'weight' => 12,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_release_date',
+      'label' => 'Release Date',
+      'required' => 0,
+      'settings' => array(
+        'default_value' => 'now',
+        'default_value2' => 'same',
+        'default_value_code' => '',
+        'default_value_code2' => '',
+        'user_register_form' => FALSE,
+      ),
+      'widget' => array(
+        'active' => 1,
+        'module' => 'date',
+        'settings' => array(
+          'increment' => 15,
+          'input_format' => 'm/d/Y - H:i:s',
+          'input_format_custom' => '',
+          'label_position' => 'above',
+          'text_parts' => array(),
+          'year_range' => '-3:+3',
+        ),
+        'type' => 'date_popup',
+        'weight' => 31,
+      ),
+    );
+    if (!field_read_instance('node', 'field_release_date', 'usgs_node')) {
+      field_create_instance($instance);
+    }
+
+
+    //Subtitle
+    $help = t('Enter the subtitle the article.');
+    $instance = array(
+      'bundle' => 'usgs_node',
+      'deleted' => 0,
+      'description' => $help,
+      'entity_type' => 'node',
+      'field_name' => 'field_news_article_subtitle',
+      'label' => 'Article Subtitle',
+      'required' => 0,
+    );
+    if (!field_read_instance('node', 'field_news_article_subtitle', 'usgs_node')) {
+      field_create_instance($instance);
+    }
+
+    //Article Type
+    $help = t('Enter the article type the article.');
+    $instance = array(
+      'bundle' => 'usgs_node',
+      'deleted' => 0,
+      'description' => $help,
+      'widget' => array(
+        'type' => 'options_buttons'
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'field_news_article_type',
+      'label' => 'Article Type',
+      'required' => 1,
+    );
+    if (!field_read_instance('node', 'field_news_article_type', 'usgs_node')) {
+      field_create_instance($instance);
+    }
+
+    //Contacts
+    $help = t('Enter contacts for the article.');
+    $instance = array(
+      'bundle' => 'usgs_node',
+      'deleted' => 0,
+      'description' => $help,
+      'entity_type' => 'node',
+      'field_name' => 'field_news_article_contacts',
+      'label' => 'Contacts',
+      'required' => 0,
+    );
+    if (!field_read_instance('node', 'field_news_article_contacts', 'usgs_node')) {
+      field_create_instance($instance);
+    }
+
+    //Partners
+    $help = t('Enter a partner for the article');
+    $instance = array(
+      'bundle' => 'usgs_node',
+      'deleted' => 0,
+      'description' => $help,
+      'entity_type' => 'node',
+      'field_name' => 'field_partners',
+      'label' => 'Partners',
+      'required' => 0,
+    );
+    if (!field_read_instance('node', 'field_partners', 'usgs_node')) {
+      field_create_instance($instance);
+    }
+
+
+    //Notifications
+    $help = t('Enter the notifications for the article.');
+    $instance = array(
+      'bundle' => 'usgs_node',
+      'deleted' => 0,
+      'description' => $help,
+      'entity_type' => 'node',
+      'field_name' => 'field_news_article_notifications',
+      'label' => 'Notifications',
+      'required' => 0,
+      'widget' => array(
+        'type' => 'options_buttons',
+        'weight' => 10,
+
+      ),
+    );
+    if (!field_read_instance('node', 'field_news_article_notifications', 'usgs_node')) {
+      field_create_instance($instance);
+    }
+
+    //Article Status
+    $help = t('Enter the published status for the article.');
+    $instance = array(
+      'bundle' => 'usgs_node',
+      'deleted' => 0,
+      'description' => $help,
+      'entity_type' => 'node',
+      'field_name' => 'field_news_article_pub_status',
+      'label' => 'Publication Status',
+      'required' => 0,
+    );
+    if (!field_read_instance('node', 'field_news_article_pub_status', 'usgs_node')) {
+      field_create_instance($instance);
+    }
+
+    //Additional Notifications
+    $help = t('Enter additional email addresses for the article notification list.');
+    $instance = array(
+      'bundle' => 'usgs_node',
+      'deleted' => 0,
+      'description' => $help,
+      'entity_type' => 'node',
+      'field_name' => 'field_news_article_addtl_notify',
+      'label' => 'Additional Notifications',
+      'required' => 0,
+    );
+    if (!field_read_instance('node', 'field_news_article_addtl_notify', 'usgs_node')) {
+      field_create_instance($instance);
+    }
+
+  }
+
+  //Create an image style for the news and general carousels that
+  $style = image_style_save(array(
+      'name' => 'top_story_carousel',
+      'label' => 'Carousel image style'
+    )
+  );
+  $effect = array(
+    'name' => 'image_resize',
+    'data' => array(
+      'width' => 1176,
+      'height' => 350,
+      'upscale' => TRUE,
+    ),
+    'isid' => $style['isid'],
+  );
+  image_effect_save($effect);
+}
+
+

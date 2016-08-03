@@ -1,0 +1,31 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : Jul 15, 2015, 2:04:07 AM
+    Author     : rwalton
+*/
+
+
+/* SOCIAL PROFILE STUFF */
+.socialmedia-icon {
+  background-image: url(../images/icons/sprite-social-media.png);   
+  display:inline-block;
+  height: 32px;
+  left: -10px;
+  top: 10px;
+  position: relative; 
+  width: 32px;
+}
+.socialmedia-icon.Facebook   {background-position: -308px;}
+.socialmedia-icon.Flicker    {background-position: -274px;}
+.socialmedia-icon.Github     {background-position: -206px;}
+.socialmedia-icon.Googleplus {background-position: -138px;}
+.socialmedia-icon.Instagram  {background-position: -105px;}
+.socialmedia-icon.Podcasts   {background-position: -172px;}
+.socialmedia-icon.Storify    {background-position: -34px;}
+.socialmedia-icon.Twitter    {background-position: -342px;}
+.socialmedia-icon.Youtube    {background-position: -241px;}
+ 
